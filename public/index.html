@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat Simples</title>
+<style>
+  body {
+    font-family: 'Arial', sans-serif;
+    background-color: #121212; /* Cor de fundo escura */
+    color: #e0e0e0; /* Cor do texto claro */
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Ajusta o alinhamento vertical */
+    padding-top: 20px;
+    height: 100vh; /* Faz o body ocupar a altura total da tela */
+    margin: 0; /* Remove a margem padrão */
+  }
+
+  #chat-container {
+    width: 600px;
+    height: calc(100vh - 120px); /* Ajusta a altura baseando-se na altura total da tela menos o espaço para o input */
+    border: 1px solid #333;
+    background-color: #1e1e1e;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    overflow-y: auto;
+    border-radius: 8px 8px 0 0; /* Arredonda apenas as bordas superiores */
+    margin-bottom: -5px; /* Corrige um potencial espaço entre o chat-container e o chat-footer */
+  }
+
+  #chat-footer {
+    width: 600px;
+    padding: 10px;
+    background-color: #1e1e1e; /* Cor de fundo para combinar com o chat-container */
+    border: 1px solid #333;
+    border-radius: 0 0 8px 8px; /* Arredonda apenas as bordas inferiores */
+  }
+
+  #message-input {
+    outline: none;
+    border: 1px solid #555;
+    background-color: #333;
+    color: #ddd;
+    border-radius: 20px;
+    padding: 10px;
+    width: calc(100% - 24px); /* Ajuste para padding e bordas */
+    resize: none; /* Desabilita a capacidade do usuário de redimensionar manualmente */
+    overflow: hidden; /* Previne scrollbar */
+    box-sizing: border-box; /* Inclui padding e borda no cálculo da largura */
+    display: block; /* Garante que a textarea se comporte como um bloco */
+    margin-bottom: 10px; /* Espaço antes do botão enviar */
+  }
+
+
+  button#send-btn {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+  }
+
+  button#send-btn:hover {
+    background-color: #0056b3;
+  }
+
+  /* Estilos para as mensagens */
+  .message {
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 10px;
+    border: 1px solid #444;
+    max-width: 80%;
+  }
+
+  .message.user {
+    align-self: flex-end;
+    background-color: #026902;
+    color: #d7f3d7;
+  }
+
+  .message.bot {
+    align-self: flex-start;
+    background-color: #2c2f33;
+    color: #cdd1d4;
+  }
+</style>
+</head>
+<body>
+
+<div id="chat-container"></div>
+<div id="chat-footer">
+  <textarea id="message-input" placeholder="Digite sua mensagem aqui..."></textarea>
+  <button id="send-btn">Enviar</button>
+</div>
+  
+
+<script>
+  document.getElementById('message-input').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
+  });
+
+
+  document.getElementById('send-btn').addEventListener('click', function() {
+    const message = document.getElementById('message-input').value;
+    if (message) {
+      sendMessage(message);
+      document.getElementById('message-input').value = '';
+    }
+  });
+
+  function sendMessage(content) {
+    const data = {
+      role: 'user',
+      content: content
+    };
+
+    displayMessage(`Usuário: ${content}`, true);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'http://localhost:3000/save', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+        const response = JSON.parse(xhr.responseText);
+
+        if (response.image) {
+          displayImage(response.image);
+        } else {
+          displayMessage(`Resposta: ${response.content}`, false);
+        }
+      }
+    };
+
+    xhr.send(JSON.stringify(data));
+  }
+
+  function displayMessage(message, isUser = true) {
+    const chatContainer = document.getElementById('chat-container');
+    const messageElement = document.createElement('div');
+    messageElement.textContent = message;
+    messageElement.className = `message ${isUser ? 'user' : 'bot'}`;
+    chatContainer.appendChild(messageElement);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+
+  function displayImage(imagePath) {
+    const chatContainer = document.getElementById('chat-container');
+    const imageElement = document.createElement('img');
+    imageElement.src = imagePath;
+    imageElement.style.maxWidth = '100%';
+    imageElement.style.borderRadius = '10px';
+    chatContainer.appendChild(imageElement);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+</script>
+
+</body>
+</html>
